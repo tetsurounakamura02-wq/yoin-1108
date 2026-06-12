@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const useSearch = useWebSearch === true;
-    const model = useSearch ? 'claude-3-7-sonnet-20250219' : 'claude-3-5-sonnet-20241022';
+    const model = 'claude-sonnet-4-6';
 
     const messageParams = {
       model,
