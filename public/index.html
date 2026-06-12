@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YOIN — 余韻</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #09090f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: #2a2a38;
+      --accent: #9b59f5;
+      --accent-dim: #6d3cbf;
+      --text: #e8e8f0;
+      --muted: #7070a0;
+      --gold: #f0b429;
+      --price: #22c55e;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --error-border: rgba(239, 68, 68, 0.3);
+      --error-text: #fc8181;
+    }
+
+    body {
+      font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+    }
+
+    .logo {
+      font-size: 3.5rem;
+      font-weight: 200;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-shadow: 0 0 40px rgba(155, 89, 245, 0.35);
+    }
+
+    .tagline {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 7px 15px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.18s;
+      user-select: none;
+    }
+
+    .chip:hover { border-color: var(--accent-dim); color: var(--text); }
+    .chip.active { border-color: var(--accent); background: rgba(155, 89, 245, 0.15); color: var(--accent); }
+
+    .text-input {
+      width: 100%;
+      padding: 13px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      margin-top: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .text-input:focus { border-color: var(--accent); }
+    .text-input::placeholder { color: var(--muted); }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] { display: none; }
+
+    .toggle {
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--border);
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    input[type="checkbox"]:checked + .toggle { background: var(--accent); }
+    input[type="checkbox"]:checked + .toggle::after { transform: translateX(20px); }
+
+    .toggle-label { font-size: 0.85rem; color: var(--muted); }
+
+    .btn-search {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-search:hover:not(:disabled) {
+      background: var(--accent-dim);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(155, 89, 245, 0.3);
+    }
+
+    .btn-search:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .error-box {
+      padding: 13px 16px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: 12px;
+      color: var(--error-text);
+      font-size: 0.875rem;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    .loading-box {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .loading-dot {
+      display: inline-block;
+      animation: blink 1.4s infinite;
+    }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+
+    .results-header {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin: 32px 0 16px;
+      text-align: center;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: rgba(155, 89, 245, 0.35); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .card-name { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+
+    .card-category {
+      font-size: 0.72rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cat-restaurant { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+    .cat-cafe       { background: rgba(180, 120, 60, 0.15); color: #cd853f; }
+    .cat-bar        { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .cat-sauna      { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
+    .cat-event      { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .cat-travel     { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
+    .cat-default    { background: rgba(100, 100, 150, 0.15); color: #9090c0; }
+
+    .prestige { font-size: 0.95rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; }
+
+    .atmosphere { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+
+    .card-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+
+    .price-tag { font-size: 0.85rem; color: var(--price); font-weight: 500; }
+
+    .emotion-tag {
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      background: rgba(155, 89, 245, 0.1);
+      border: 1px solid rgba(155, 89, 245, 0.2);
+      border-radius: 8px;
+      color: #b48af5;
+      line-height: 1.5;
+    }
+
+    .description {
+      font-size: 0.83rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">YOIN</div>
+    <div class="tagline">余韻 — 感情から、今夜の行き先を探す</div>
+  </header>
+
+  <div class="container">
+
+    <!-- Emotion -->
+    <div class="section">
+      <div class="section-label">今の気分は？</div>
+      <div class="chips" id="emotion-chips">
+        <span class="chip" data-value="孤独で物思いにふけりたい">孤独</span>
+        <span class="chip" data-value="高揚していてパワーを発散したい">高揚</span>
+        <span class="chip" data-value="疲れていて癒されたい">癒し</span>
+        <span class="chip" data-value="落ち着きたい、静かな時間がほしい">静寂</span>
+        <span class="chip" data-value="感傷的で少し切ない気持ち">感傷</span>
+        <span class="chip" data-value="ワクワクしていて新しい体験がしたい">ワクワク</span>
+        <span class="chip" data-value="懐かしさを感じたい">懐かしい</span>
+        <span class="chip" data-value="開放的で自由を感じたい">開放的</span>
+        <span class="chip" data-value="誰かと特別なロマンチックな時間を過ごしたい">ロマンチック</span>
+        <span class="chip" data-value="集中してクリエイティブになりたい">集中</span>
+      </div>
+      <input
+        class="text-input"
+        id="emotion-input"
+        type="text"
+        placeholder="または気持ちを自由に入力… (例: 仕事終わりに一人でゆっくりしたい)"
+      >
+    </div>
+
+    <!-- Category -->
+    <div class="section">
+      <div class="section-label">カテゴリ（任意）</div>
+      <div class="chips" id="category-chips">
+        <span class="chip active" data-value="">すべて</span>
+        <span class="chip" data-value="レストラン">レストラン</span>
+        <span class="chip" data-value="カフェ">カフェ</span>
+        <span class="chip" data-value="バー">バー</span>
+        <span class="chip" data-value="サウナ">サウナ</span>
+        <span class="chip" data-value="イベント">イベント</span>
+        <span class="chip" data-value="旅行先">旅行先</span>
+      </div>
+    </div>
+
+    <!-- Web search -->
+    <div class="section">
+      <label class="toggle-row">
+        <input type="checkbox" id="web-search">
+        <span class="toggle"></span>
+        <span class="toggle-label">Web検索を使う（より新鮮な情報・実在の場所を優先）</span>
+      </label>
+    </div>
+
+    <button class="btn-search" id="search-btn" onclick="suggest()">余韻を探す</button>
+
+    <div class="error-box hidden" id="error-box"></div>
+
+    <div class="loading-box hidden" id="loading-box">
+      AIが余韻を探しています<span class="loading-dot">．</span><span class="loading-dot">．</span><span class="loading-dot">．</span>
+    </div>
+
+    <div id="results"></div>
+
+  </div>
+
+  <script>
+    // Single-select chip groups
+    function setupChips(containerId) {
+      const container = document.getElementById(containerId);
+      container.addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        if (containerId === 'emotion-chips') {
+          document.getElementById('emotion-input').value = '';
+        }
+      });
+    }
+
+    setupChips('emotion-chips');
+    setupChips('category-chips');
+
+    document.getElementById('emotion-input').addEventListener('input', () => {
+      document.querySelectorAll('#emotion-chips .chip').forEach(c => c.classList.remove('active'));
+    });
+
+    function getCategoryClass(cat) {
+      if (!cat) return 'cat-default';
+      if (cat.includes('レストラン')) return 'cat-restaurant';
+      if (cat.includes('カフェ'))     return 'cat-cafe';
+      if (cat.includes('バー'))       return 'cat-bar';
+      if (cat.includes('サウナ'))     return 'cat-sauna';
+      if (cat.includes('イベント'))   return 'cat-event';
+      if (cat.includes('旅行'))       return 'cat-travel';
+      return 'cat-default';
+    }
+
+    function renderPrestige(n) {
+      const v = Math.min(5, Math.max(0, parseInt(n) || 0));
+      return '★'.repeat(v) + '☆'.repeat(5 - v);
+    }
+
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderCard(s) {
+      const catClass = getCategoryClass(s.category);
+      return `
+        <div class="card">
+          <div class="card-top">
+            <div class="card-name">${esc(s.name)}</div>
+            <span class="card-category ${catClass}">${esc(s.category)}</span>
+          </div>
+          <div class="prestige">${renderPrestige(s.prestige)}</div>
+          <div class="atmosphere">${esc(s.atmosphere)}</div>
+          <div class="card-meta">
+            ${s.price_range ? `<span class="price-tag">${esc(s.price_range)}</span>` : ''}
+            ${s.emotion_match ? `<span class="emotion-tag">${esc(s.emotion_match)}</span>` : ''}
+          </div>
+          ${s.description ? `<div class="description">${esc(s.description)}</div>` : ''}
+        </div>`;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-box');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    async function suggest() {
+      const activeChip = document.querySelector('#emotion-chips .chip.active');
+      const inputVal = document.getElementById('emotion-input').value.trim();
+      const emotion = inputVal || (activeChip ? activeChip.dataset.value : '');
+
+      if (!emotion) {
+        showError('気分や感情を選択するか、テキストボックスに入力してください。');
+        return;
+      }
+
+      const activeCat = document.querySelector('#category-chips .chip.active');
+      const category = activeCat ? activeCat.dataset.value : '';
+      const useWebSearch = document.getElementById('web-search').checked;
+
+      document.getElementById('error-box').classList.add('hidden');
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('loading-box').classList.remove('hidden');
+      document.getElementById('search-btn').disabled = true;
+
+      try {
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emotion, category, useWebSearch })
+        });
+
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          showError(`サーバーエラー (HTTP ${res.status})。しばらく待ってから再試行してください。`);
+          return;
+        }
+
+        if (!res.ok) {
+          showError(data.error || `エラー (HTTP ${res.status})`);
+          return;
+        }
+
+        if (!data.suggestions || data.suggestions.length === 0) {
+          showError('提案が見つかりませんでした。別の気分で試してみてください。');
+          return;
+        }
+
+        document.getElementById('results').innerHTML =
+          `<div class="results-header">— ${data.suggestions.length}件の提案 —</div>` +
+          data.suggestions.map(renderCard).join('');
+
+      } catch (err) {
+        showError(`通信エラー: ${err.message}`);
+      } finally {
+        document.getElementById('loading-box').classList.add('hidden');
+        document.getElementById('search-btn').disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

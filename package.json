@@ -1,0 +1,8 @@
+{
+  "name": "yoin",
+  "version": "1.0.0",
+  "description": "感情から店・イベント・サウナ・旅行先を提案するアプリ",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
