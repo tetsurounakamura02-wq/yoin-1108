@@ -31,118 +31,86 @@
       padding-bottom: 80px;
     }
 
-    header {
-      text-align: center;
-      padding: 60px 20px 40px;
-    }
-
+    header { text-align: center; padding: 48px 20px 36px; }
     .logo {
-      font-size: 3.5rem;
+      font-size: 3rem;
       font-weight: 200;
       letter-spacing: 0.35em;
       color: var(--accent);
       text-shadow: 0 0 40px rgba(155, 89, 245, 0.35);
     }
+    .tagline { margin-top: 8px; font-size: 0.82rem; color: var(--muted); letter-spacing: 0.12em; }
 
-    .tagline {
-      margin-top: 10px;
-      font-size: 0.85rem;
-      color: var(--muted);
-      letter-spacing: 0.12em;
-    }
+    .container { max-width: 680px; margin: 0 auto; padding: 0 20px; }
 
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .section {
-      margin-bottom: 28px;
-    }
-
+    .section { margin-bottom: 24px; }
     .section-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem; color: var(--muted);
+      letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ── Mode grid ── */
+    .mode-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .mode-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 8px;
+      cursor: pointer;
+      font-family: inherit;
       color: var(--muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
+      font-size: 0.8rem;
+      transition: all 0.18s;
+      text-align: center;
+    }
+    .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+    .mode-btn:hover { border-color: var(--accent-dim); color: var(--text); }
+    .mode-btn.active {
+      border-color: var(--accent);
+      background: rgba(155, 89, 245, 0.12);
+      color: var(--accent);
+    }
+    @media (max-width: 400px) {
+      .mode-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
+    /* ── Chips (multi-select tags) ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
     .chip {
-      padding: 7px 15px;
+      padding: 6px 13px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--muted);
       cursor: pointer;
-      font-size: 0.85rem;
-      transition: all 0.18s;
+      font-size: 0.82rem;
+      transition: all 0.15s;
       user-select: none;
     }
-
     .chip:hover { border-color: var(--accent-dim); color: var(--text); }
     .chip.active { border-color: var(--accent); background: rgba(155, 89, 245, 0.15); color: var(--accent); }
 
+    /* ── Text inputs ── */
     .text-input {
       width: 100%;
-      padding: 13px 16px;
+      padding: 12px 15px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-family: inherit;
-      margin-top: 12px;
       outline: none;
       transition: border-color 0.2s;
     }
-
     .text-input:focus { border-color: var(--accent); }
     .text-input::placeholder { color: var(--muted); }
 
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
+    /* ── Count row ── */
+    .count-row { display: flex; align-items: center; gap: 10px; }
+    .count-label { font-size: 0.82rem; color: var(--muted); }
 
-    input[type="checkbox"] { display: none; }
-
-    .toggle {
-      width: 44px;
-      height: 24px;
-      border-radius: 999px;
-      background: var(--border);
-      position: relative;
-      transition: background 0.2s;
-      flex-shrink: 0;
-    }
-
-    .toggle::after {
-      content: '';
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: white;
-      top: 3px;
-      left: 3px;
-      transition: transform 0.2s;
-    }
-
-    input[type="checkbox"]:checked + .toggle { background: var(--accent); }
-    input[type="checkbox"]:checked + .toggle::after { transform: translateX(20px); }
-
-    .toggle-label { font-size: 0.85rem; color: var(--muted); }
-
+    /* ── Search button ── */
     .btn-search {
       width: 100%;
       padding: 15px;
@@ -150,125 +118,191 @@
       color: white;
       border: none;
       border-radius: 12px;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-family: inherit;
       font-weight: 500;
       cursor: pointer;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       transition: all 0.2s;
-      margin-top: 8px;
+      margin-top: 4px;
     }
-
     .btn-search:hover:not(:disabled) {
       background: var(--accent-dim);
       transform: translateY(-1px);
       box-shadow: 0 4px 20px rgba(155, 89, 245, 0.3);
     }
-
     .btn-search:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+    /* ── Refresh button ── */
+    .btn-refresh {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.18s;
+    }
+    .btn-refresh:hover { border-color: var(--accent-dim); color: var(--text); }
+
+    /* ── Error / Loading ── */
     .error-box {
-      padding: 13px 16px;
+      padding: 12px 15px;
       background: var(--error-bg);
       border: 1px solid var(--error-border);
       border-radius: 12px;
       color: var(--error-text);
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       margin-top: 16px;
       line-height: 1.6;
     }
-
     .loading-box {
       text-align: center;
       padding: 40px 20px;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
     }
-
-    .loading-dot {
-      display: inline-block;
-      animation: blink 1.4s infinite;
-    }
+    .loading-dot { display: inline-block; animation: blink 1.4s infinite; }
     .loading-dot:nth-child(2) { animation-delay: 0.2s; }
     .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
 
-    @keyframes blink {
-      0%, 80%, 100% { opacity: 0; }
-      40% { opacity: 1; }
+    /* ── Result title area ── */
+    .result-title-area { margin: 28px 0 16px; }
+    .result-title { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    .result-subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+    .result-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+    /* ── Web search badge ── */
+    .web-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 999px;
+      color: #4ade80;
+      letter-spacing: 0.04em;
     }
 
-    .results-header {
-      font-size: 0.72rem;
+    /* ── Group ── */
+    .group { margin-bottom: 24px; }
+    .group-label {
+      font-size: 0.7rem;
       color: var(--muted);
       letter-spacing: 0.12em;
-      margin: 32px 0 16px;
-      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-left: 4px;
+      border-left: 2px solid var(--accent-dim);
+      padding-left: 8px;
     }
 
+    /* ── Spot / Experience cards ── */
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 12px;
+      padding: 18px;
+      margin-bottom: 10px;
       transition: border-color 0.2s;
     }
-
     .card:hover { border-color: rgba(155, 89, 245, 0.35); }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-      gap: 8px;
-    }
+    .card-name { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .card-address { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+    .card-duration { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
 
-    .card-name { font-size: 1.05rem; font-weight: 600; color: var(--text); }
-
-    .card-category {
+    .spot-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .spot-tag {
       font-size: 0.72rem;
-      padding: 3px 10px;
+      padding: 2px 8px;
       border-radius: 999px;
-      font-weight: 500;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .cat-restaurant { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
-    .cat-cafe       { background: rgba(180, 120, 60, 0.15); color: #cd853f; }
-    .cat-bar        { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
-    .cat-sauna      { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
-    .cat-event      { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
-    .cat-travel     { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
-    .cat-default    { background: rgba(100, 100, 150, 0.15); color: #9090c0; }
-
-    .prestige { font-size: 0.95rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; }
-
-    .atmosphere { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
-
-    .card-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-
-    .price-tag { font-size: 0.85rem; color: var(--price); font-weight: 500; }
-
-    .emotion-tag {
-      font-size: 0.8rem;
-      padding: 4px 12px;
-      background: rgba(155, 89, 245, 0.1);
-      border: 1px solid rgba(155, 89, 245, 0.2);
-      border-radius: 8px;
+      background: rgba(155, 89, 245, 0.08);
+      border: 1px solid rgba(155, 89, 245, 0.18);
       color: #b48af5;
-      line-height: 1.5;
     }
 
-    .description {
-      font-size: 0.83rem;
+    .price-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      color: var(--price);
+      font-weight: 500;
+      padding: 2px 8px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .card-reason {
+      font-size: 0.82rem;
       color: var(--muted);
-      line-height: 1.7;
-      margin-top: 10px;
+      line-height: 1.65;
+      font-style: italic;
+      padding-left: 8px;
+      border-left: 2px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 4px 10px;
+      border: 1px solid rgba(155, 89, 245, 0.25);
+      border-radius: 6px;
+      transition: all 0.15s;
+      margin-bottom: 10px;
+    }
+    .card-link:hover { background: rgba(155, 89, 245, 0.1); }
+
+    /* ── Feedback ── */
+    .feedback-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding-top: 10px;
       border-top: 1px solid var(--border);
     }
+    .fb-label { font-size: 0.7rem; color: var(--muted); flex: 1; }
+    .fb-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 11px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      transition: all 0.15s;
+    }
+    .fb-btn:hover { border-color: var(--accent-dim); background: rgba(155,89,245,0.08); }
+    .fb-btn.active { border-color: var(--accent); background: rgba(155,89,245,0.15); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 9px 18px;
+      font-size: 0.82rem;
+      color: var(--text);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      z-index: 100; opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     .hidden { display: none !important; }
   </style>
@@ -281,126 +315,254 @@
 
   <div class="container">
 
-    <!-- Emotion -->
+    <!-- Mode -->
     <div class="section">
-      <div class="section-label">今の気分は？</div>
-      <div class="chips" id="emotion-chips">
-        <span class="chip" data-value="孤独で物思いにふけりたい">孤独</span>
-        <span class="chip" data-value="高揚していてパワーを発散したい">高揚</span>
-        <span class="chip" data-value="疲れていて癒されたい">癒し</span>
-        <span class="chip" data-value="落ち着きたい、静かな時間がほしい">静寂</span>
-        <span class="chip" data-value="感傷的で少し切ない気持ち">感傷</span>
-        <span class="chip" data-value="ワクワクしていて新しい体験がしたい">ワクワク</span>
-        <span class="chip" data-value="懐かしさを感じたい">懐かしい</span>
-        <span class="chip" data-value="開放的で自由を感じたい">開放的</span>
-        <span class="chip" data-value="誰かと特別なロマンチックな時間を過ごしたい">ロマンチック</span>
-        <span class="chip" data-value="集中してクリエイティブになりたい">集中</span>
-      </div>
-      <input
-        class="text-input"
-        id="emotion-input"
-        type="text"
-        placeholder="または気持ちを自由に入力… (例: 仕事終わりに一人でゆっくりしたい)"
-      >
-    </div>
-
-    <!-- Category -->
-    <div class="section">
-      <div class="section-label">カテゴリ（任意）</div>
-      <div class="chips" id="category-chips">
-        <span class="chip active" data-value="">すべて</span>
-        <span class="chip" data-value="レストラン">レストラン</span>
-        <span class="chip" data-value="カフェ">カフェ</span>
-        <span class="chip" data-value="バー">バー</span>
-        <span class="chip" data-value="サウナ">サウナ</span>
-        <span class="chip" data-value="イベント">イベント</span>
-        <span class="chip" data-value="旅行先">旅行先</span>
+      <div class="section-label">モード</div>
+      <div class="mode-grid">
+        <button class="mode-btn active" data-mode="tonight">
+          <span class="mode-icon">🍜</span>今夜
+        </button>
+        <button class="mode-btn" data-mode="live">
+          <span class="mode-icon">🎵</span>ライブ
+        </button>
+        <button class="mode-btn" data-mode="sports">
+          <span class="mode-icon">⚽</span>スポーツ
+        </button>
+        <button class="mode-btn" data-mode="travel">
+          <span class="mode-icon">✈️</span>旅行
+        </button>
       </div>
     </div>
 
-    <!-- Web search -->
+    <!-- Area -->
     <div class="section">
-      <label class="toggle-row">
-        <input type="checkbox" id="web-search">
-        <span class="toggle"></span>
-        <span class="toggle-label">Web検索を使う（より新鮮な情報・実在の場所を優先）</span>
-      </label>
+      <div class="section-label">エリア</div>
+      <input class="text-input" id="area-input" type="text"
+             placeholder="例: 渋谷、横浜、山梨、千葉" value="渋谷">
+    </div>
+
+    <!-- Tags (context-aware, multi-select) -->
+    <div class="section">
+      <div class="section-label">タグ（複数選択可）</div>
+      <div class="chips" id="tag-chips"></div>
+    </div>
+
+    <!-- Budget -->
+    <div class="section">
+      <div class="section-label">予算</div>
+      <div class="chips" id="budget-chips">
+        <span class="chip active" data-value="">指定なし</span>
+        <span class="chip" data-value="〜3000">〜¥3,000</span>
+        <span class="chip" data-value="3000-8000">¥3,000〜¥8,000</span>
+        <span class="chip" data-value="8000-20000">¥8,000〜¥20,000</span>
+        <span class="chip" data-value="20000+">¥20,000以上</span>
+      </div>
+    </div>
+
+    <!-- Day range (live / sports only) -->
+    <div class="section hidden" id="dayrange-section">
+      <div class="section-label">期間</div>
+      <div class="chips" id="dayrange-chips">
+        <span class="chip active" data-value="tonight">今夜</span>
+        <span class="chip" data-value="week">今週（7日間）</span>
+      </div>
+    </div>
+
+    <!-- Count -->
+    <div class="section">
+      <div class="section-label">提案数</div>
+      <div class="chips" id="count-chips">
+        <span class="chip" data-value="3">3件</span>
+        <span class="chip active" data-value="5">5件</span>
+        <span class="chip" data-value="8">8件</span>
+      </div>
+    </div>
+
+    <!-- Free text -->
+    <div class="section">
+      <div class="section-label">追加条件（任意）</div>
+      <input class="text-input" id="free-input" type="text"
+             placeholder="例: 座席が広め、禁煙、子連れOK">
     </div>
 
     <button class="btn-search" id="search-btn" onclick="suggest()">余韻を探す</button>
 
     <div class="error-box hidden" id="error-box"></div>
-
     <div class="loading-box hidden" id="loading-box">
       AIが余韻を探しています<span class="loading-dot">．</span><span class="loading-dot">．</span><span class="loading-dot">．</span>
     </div>
 
     <div id="results"></div>
+    <button class="btn-refresh hidden" id="refresh-btn" onclick="suggestMore()">別の提案を見る →</button>
 
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script>
-    // Single-select chip groups
-    function setupChips(containerId) {
-      const container = document.getElementById(containerId);
-      container.addEventListener('click', e => {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
-        container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        if (containerId === 'emotion-chips') {
-          document.getElementById('emotion-input').value = '';
-        }
+    // ── Constants ─────────────────────────────────────────
+    const FB_KEY = 'yoin_feedback';
+
+    const MODE_TAGS = {
+      tonight: ['疲れた', '語りたい', 'テンション上げたい', '一人飲み', 'デート', 'ご褒美', '非日常', '落ち着きたい', 'サウナ', '深夜'],
+      live:    ['J-POP', 'ロック', 'クラシック', '演劇・舞台', 'お笑い', 'アイドル', 'ジャズ', 'EDM', 'インディー', 'K-POP'],
+      sports:  ['プロ野球', 'Jリーグ', 'Bリーグ', 'バレーボール', '東京六大学野球', '大学サッカー', 'サッカー', '野球', 'バスケ'],
+      travel:  ['温泉', '絶景', 'グルメ', '歴史・文化', 'アウトドア', '海', '山', '日帰り', '宿泊', '一人旅'],
+    };
+
+    // ── State ─────────────────────────────────────────────
+    let currentMode    = 'tonight';
+    let lastSuggested  = [];  // exclude on re-search
+
+    // ── Mode buttons ──────────────────────────────────────
+    document.querySelector('.mode-grid').addEventListener('click', e => {
+      const btn = e.target.closest('.mode-btn');
+      if (!btn) return;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      renderTagChips();
+      toggleDayRange();
+      lastSuggested = [];
+      document.getElementById('refresh-btn').classList.add('hidden');
+    });
+
+    function toggleDayRange() {
+      const show = currentMode === 'live' || currentMode === 'sports';
+      document.getElementById('dayrange-section').classList.toggle('hidden', !show);
+    }
+
+    // ── Tag chips (multi-select) ───────────────────────────
+    function renderTagChips() {
+      const container = document.getElementById('tag-chips');
+      container.innerHTML = '';
+      (MODE_TAGS[currentMode] || []).forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'chip';
+        span.dataset.value = tag;
+        span.textContent = tag;
+        container.appendChild(span);
       });
     }
 
-    setupChips('emotion-chips');
-    setupChips('category-chips');
-
-    document.getElementById('emotion-input').addEventListener('input', () => {
-      document.querySelectorAll('#emotion-chips .chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('tag-chips').addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (chip) chip.classList.toggle('active');
     });
 
-    function getCategoryClass(cat) {
-      if (!cat) return 'cat-default';
-      if (cat.includes('レストラン')) return 'cat-restaurant';
-      if (cat.includes('カフェ'))     return 'cat-cafe';
-      if (cat.includes('バー'))       return 'cat-bar';
-      if (cat.includes('サウナ'))     return 'cat-sauna';
-      if (cat.includes('イベント'))   return 'cat-event';
-      if (cat.includes('旅行'))       return 'cat-travel';
-      return 'cat-default';
+    // ── Single-select chip groups ─────────────────────────
+    ['budget-chips', 'dayrange-chips', 'count-chips'].forEach(id => {
+      document.getElementById(id).addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        document.getElementById(id).querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+
+    // ── Feedback (localStorage) ────────────────────────────
+    function loadFeedback() {
+      try { return JSON.parse(localStorage.getItem(FB_KEY) || '[]'); } catch { return []; }
+    }
+    function saveFeedback(name, value) {
+      const list = loadFeedback().filter(f => f.name !== name);
+      if (value) list.push({ name, mode: currentMode, feedback: value, ts: Date.now() });
+      localStorage.setItem(FB_KEY, JSON.stringify(list));
+    }
+    function getFeedback(name) {
+      return loadFeedback().find(f => f.name === name)?.feedback || null;
     }
 
-    function renderPrestige(n) {
-      const v = Math.min(5, Math.max(0, parseInt(n) || 0));
-      return '★'.repeat(v) + '☆'.repeat(5 - v);
+    document.getElementById('results').addEventListener('click', e => {
+      const btn = e.target.closest('.fb-btn');
+      if (!btn) return;
+      const card  = btn.closest('.card');
+      const name  = card.dataset.name;
+      const value = btn.dataset.value;
+      const cur   = getFeedback(name);
+      const next  = cur === value ? null : value;
+      saveFeedback(name, next);
+      card.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+      if (next) { btn.classList.add('active'); showToast('フィードバックありがとう！'); }
+    });
+
+    // ── Toast ──────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
     }
 
+    // ── Helpers ────────────────────────────────────────────
     function esc(str) {
       return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function renderCard(s) {
-      const catClass = getCategoryClass(s.category);
+    function renderSpot(s) {
+      const fb   = getFeedback(s.name);
+      const tags = (s.tags || []).map(t => `<span class="spot-tag">${esc(t)}</span>`).join('');
+      const link = s.url
+        ? `<a class="card-link" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">詳細を見る →</a>`
+        : '';
       return `
-        <div class="card">
-          <div class="card-top">
-            <div class="card-name">${esc(s.name)}</div>
-            <span class="card-category ${catClass}">${esc(s.category)}</span>
+        <div class="card" data-name="${esc(s.name)}">
+          <div class="card-name">${esc(s.name)}</div>
+          ${s.address  ? `<div class="card-address">📍 ${esc(s.address)}</div>` : ''}
+          ${s.duration ? `<div class="card-duration">⏱ ${esc(s.duration)}</div>` : ''}
+          ${tags ? `<div class="spot-tags">${tags}</div>` : ''}
+          ${s.price ? `<span class="price-tag">${esc(s.price)}</span>` : ''}
+          ${s.reason ? `<div class="card-reason">${esc(s.reason)}</div>` : ''}
+          ${link}
+          <div class="feedback-row">
+            <span class="fb-label">役に立った？</span>
+            <button class="fb-btn${fb==='good'?' active':''}" data-value="good">👍</button>
+            <button class="fb-btn${fb==='bad'?' active':''}"  data-value="bad">👎</button>
           </div>
-          <div class="prestige">${renderPrestige(s.prestige)}</div>
-          <div class="atmosphere">${esc(s.atmosphere)}</div>
-          <div class="card-meta">
-            ${s.price_range ? `<span class="price-tag">${esc(s.price_range)}</span>` : ''}
-            ${s.emotion_match ? `<span class="emotion-tag">${esc(s.emotion_match)}</span>` : ''}
-          </div>
-          ${s.description ? `<div class="description">${esc(s.description)}</div>` : ''}
         </div>`;
+    }
+
+    function renderGroup(g) {
+      const spots = (g.spots || []).map(renderSpot).join('');
+      return `<div class="group">
+        <div class="group-label">${esc(g.label)}</div>
+        ${spots}
+      </div>`;
+    }
+
+    function renderResults(data) {
+      const webBadge = data.meta?.used_web_search
+        ? '<span class="web-badge">🔍 Web検索使用</span>' : '';
+
+      let body = '';
+      if (Array.isArray(data.experiences)) {
+        body = data.experiences.map(renderSpot).join('');
+      } else if (Array.isArray(data.groups)) {
+        body = data.groups.map(renderGroup).join('');
+      }
+
+      document.getElementById('results').innerHTML = `
+        <div class="result-title-area">
+          <div class="result-title">${esc(data.title || '')}</div>
+          <div class="result-subtitle">${esc(data.subtitle || '')}</div>
+          ${webBadge ? `<div class="result-meta">${webBadge}</div>` : ''}
+        </div>
+        ${body}`;
+    }
+
+    function collectSuggestedNames(data) {
+      const names = [];
+      if (Array.isArray(data.groups)) {
+        data.groups.forEach(g => (g.spots || []).forEach(s => s.name && names.push(s.name)));
+      }
+      if (Array.isArray(data.experiences)) {
+        data.experiences.forEach(e => e.name && names.push(e.name));
+      }
+      return names;
     }
 
     function showError(msg) {
@@ -409,22 +571,31 @@
       el.classList.remove('hidden');
     }
 
+    // ── Build request params from UI ───────────────────────
+    function buildParams(exclude = []) {
+      const area     = document.getElementById('area-input').value.trim() || '東京';
+      const freeText = document.getElementById('free-input').value.trim();
+      const tags     = [...document.querySelectorAll('#tag-chips .chip.active')].map(c => c.dataset.value);
+      const budget   = document.querySelector('#budget-chips .chip.active')?.dataset.value || null;
+      const dayRange = document.querySelector('#dayrange-chips .chip.active')?.dataset.value || 'tonight';
+      const count    = Number(document.querySelector('#count-chips .chip.active')?.dataset.value || 5);
+      return { mode: currentMode, tags, area, freeText, exclude, count, budget: budget || null, dayRange };
+    }
+
+    // ── Main search ────────────────────────────────────────
     async function suggest() {
-      const activeChip = document.querySelector('#emotion-chips .chip.active');
-      const inputVal = document.getElementById('emotion-input').value.trim();
-      const emotion = inputVal || (activeChip ? activeChip.dataset.value : '');
+      lastSuggested = [];
+      await doSearch(buildParams([]));
+    }
 
-      if (!emotion) {
-        showError('気分や感情を選択するか、テキストボックスに入力してください。');
-        return;
-      }
+    async function suggestMore() {
+      await doSearch(buildParams(lastSuggested));
+    }
 
-      const activeCat = document.querySelector('#category-chips .chip.active');
-      const category = activeCat ? activeCat.dataset.value : '';
-      const useWebSearch = document.getElementById('web-search').checked;
-
+    async function doSearch(params) {
       document.getElementById('error-box').classList.add('hidden');
       document.getElementById('results').innerHTML = '';
+      document.getElementById('refresh-btn').classList.add('hidden');
       document.getElementById('loading-box').classList.remove('hidden');
       document.getElementById('search-btn').disabled = true;
 
@@ -432,7 +603,7 @@
         const res = await fetch('/api/suggest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ emotion, category, useWebSearch })
+          body: JSON.stringify(params),
         });
 
         let data;
@@ -448,14 +619,16 @@
           return;
         }
 
-        if (!data.suggestions || data.suggestions.length === 0) {
-          showError('提案が見つかりませんでした。別の気分で試してみてください。');
+        const hasResults = (data.groups?.length || data.experiences?.length);
+        if (!hasResults) {
+          showError('提案が見つかりませんでした。条件を変えて再試行してください。');
           return;
         }
 
-        document.getElementById('results').innerHTML =
-          `<div class="results-header">— ${data.suggestions.length}件の提案 —</div>` +
-          data.suggestions.map(renderCard).join('');
+        renderResults(data);
+        const names = collectSuggestedNames(data);
+        lastSuggested = [...lastSuggested, ...names];
+        document.getElementById('refresh-btn').classList.remove('hidden');
 
       } catch (err) {
         showError(`通信エラー: ${err.message}`);
@@ -464,6 +637,10 @@
         document.getElementById('search-btn').disabled = false;
       }
     }
+
+    // ── Init ──────────────────────────────────────────────
+    renderTagChips();
+    toggleDayRange();
   </script>
 </body>
 </html>
