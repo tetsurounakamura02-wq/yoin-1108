@@ -1,14 +1,14 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
-// live / sports は必ず web_search を使う
-const WEB_SEARCH_MODES = new Set(['live', 'sports']);
+const WEB_SEARCH_MODES      = new Set(['live', 'sports']);
+const WEB_SEARCH_TIMEOUT_MS = 15_000;
+const NORMAL_TIMEOUT_MS     = 22_000;
 
-// JST の今日の日付文字列を返す（例: "2026/06/12(金)"）
 function getTodayJST() {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const y = jst.getUTCFullYear();
-  const m = String(jst.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(jst.getUTCDate()).padStart(2, '0');
+  const y   = jst.getUTCFullYear();
+  const m   = String(jst.getUTCMonth() + 1).padStart(2, '0');
+  const d   = String(jst.getUTCDate()).padStart(2, '0');
   const dow = ['日', '月', '火', '水', '木', '金', '土'][jst.getUTCDay()];
   return `${y}/${m}/${d}(${dow})`;
 }
@@ -18,17 +18,36 @@ function formatBudget(budget) {
            '8000-20000': '¥8,000〜¥20,000', '20000+': '¥20,000以上' }[budget] || null;
 }
 
-// URL に関するルール（全モード共通）
 const URL_RULE = `【URLルール（必須）】
 - Web検索で実際に見つけたURLのみ使う
 - 存在確認できないURLは必ず null にする（推測URLは絶対に使わない）
 - 検索URLの例: ぴあ→ https://lp.p.pia.jp/s/search/search.html?kw=<公演名>
                イープラス→ https://eplus.jp/sf/search?keyword=<公演名>`;
 
-// spots[] の各要素スキーマ
 const SPOT_SCHEMA = `{"name":"名前","address":"住所または最寄り駅","price":"価格帯","tags":["タグ"],"url":null,"reason":"合う理由（1〜2文）"}`;
-// experiences[] の各要素スキーマ
 const EXP_SCHEMA  = `{"name":"体験名","area":"エリア","duration":"所要時間","price":"費用目安","tags":["タグ"],"url":null,"reason":"旅のテーマに合う理由"}`;
+
+const EMOTION_TO_GENRES = {
+  疲れた:   ['静かなバー', '一人でつまめる居酒屋', 'カウンター割烹'],
+  癒やし:   ['和食', 'カフェバー', '日本酒バー'],
+  ひとり:   ['カウンター席のバー', 'ラーメン', '立ち飲み'],
+  楽しい:   ['クラフトビール', '焼き鳥', 'ダイニングバー'],
+  飲みたい: ['角打ち', 'ビアバー', 'ハイボール居酒屋'],
+  サウナ:   ['サウナ後のビール', '定食', 'ラーメン'],
+  食べたい: ['和食', '肉料理', '麺類'],
+  甘いもの: ['スイーツバー', 'カフェ', 'デザート専門'],
+  記念日:   ['個室和食', 'ワインバー', '鉄板焼き'],
+  おしゃれ: ['ルーフトップバー', 'ワインバー', 'クラフトカクテル'],
+};
+
+function detectGenresFromTags(tags) {
+  const genres = new Set();
+  for (const tag of tags) {
+    const matches = EMOTION_TO_GENRES[tag];
+    if (matches) matches.forEach(g => genres.add(g));
+  }
+  return [...genres].slice(0, 6);
+}
 
 function buildSystemPrompt(mode, { tags, area, freeText, exclude, count, budget, dayRange }) {
   const today      = getTodayJST();
@@ -39,12 +58,22 @@ function buildSystemPrompt(mode, { tags, area, freeText, exclude, count, budget,
   const freeClause = freeText   ? `\n追加条件: ${freeText}` : '';
 
   if (mode === 'tonight') {
+    const genreHints = detectGenresFromTags(tags);
+    const genreLine  = genreHints.length
+      ? `\n候補ジャンル（参考）: ${genreHints.join('、')}` : '';
     return `あなたはYOINのAIアシスタントです。
 エリア: ${area} / 今日: ${today} / 提案数: ${count}件${budClause}${freeClause}
-気分・タグ: ${tagLine}${excClause}
+気分・タグ: ${tagLine}${genreLine}${excClause}
 
-今夜行けるスポットを${count}件、ジャンル・価格帯・雰囲気が被らないよう提案してください。
-同ジャンル2件以上NG。グループは2〜3個で分類してください。
+今夜行けるスポットを${count}件提案してください。以下のルールを厳守すること:
+【多様性ルール（必須）】
+- 同じジャンルを2件以上出さない
+- 同じ価格帯を2件以上続けない
+- 提案は必ず3つの方向性に分けること:
+    ① 雰囲気・空間重視（落ち着ける・静かな・こじんまり）
+    ② 名店感・こだわり重視（人気店・老舗・クオリティ）
+    ③ コスパ・気軽さ重視（安く行ける・ふらっと入れる）
+- グループ名はこの方向性ラベルをそのまま使うこと
 ${URL_RULE}
 
 JSONのみ返してください（説明文・マークダウン不要）:
@@ -98,6 +127,34 @@ JSONのみ返してください（説明文・マークダウン不要）:
   return null;
 }
 
+// Web 検索あり→タイムアウト時にWeb検索なしでフォールバック
+async function callWithFallback(apiKey, messageParams) {
+  const clientFast = new Anthropic({ apiKey, timeout: WEB_SEARCH_TIMEOUT_MS });
+  try {
+    return await clientFast.messages.create(messageParams);
+  } catch (err) {
+    const isTimeout = err.code === 'ERR_REQUEST_TIMEOUT' || err.name === 'APITimeoutError'
+      || (err.message && err.message.includes('timeout'));
+    if (!isTimeout) throw err;
+    // タイムアウト → Web検索なしで再試行
+    const fallbackParams = { ...messageParams };
+    delete fallbackParams.tools;
+    const clientSlow = new Anthropic({ apiKey, timeout: NORMAL_TIMEOUT_MS });
+    const result = await clientSlow.messages.create(fallbackParams);
+    result._fellBack = true;
+    return result;
+  }
+}
+
+function errorResponse(res, message, mode) {
+  return res.status(200).json({
+    title: 'しばらく待ってから再度お試しください',
+    subtitle: message,
+    groups: [],
+    meta: { error: true, error_message: message, mode },
+  });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -119,9 +176,7 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({
-      error: 'ANTHROPIC_API_KEY が設定されていません。Vercel の環境変数を確認してください。'
-    });
+    return errorResponse(res, 'ANTHROPIC_API_KEY が設定されていません。Vercel の環境変数を確認してください。', mode);
   }
 
   const systemPrompt = buildSystemPrompt(mode, {
@@ -135,13 +190,11 @@ module.exports = async function handler(req, res) {
   });
 
   if (!systemPrompt) {
-    return res.status(400).json({ error: `不明なモード: ${mode}` });
+    return errorResponse(res, `不明なモード: ${mode}`, mode);
   }
 
   const useWebSearch = WEB_SEARCH_MODES.has(mode);
-  const client = new Anthropic({ apiKey, timeout: 25_000 });
-
-  const userMessage = useWebSearch
+  const userMessage  = useWebSearch
     ? `${area}の${mode === 'sports' ? 'スポーツ試合' : 'ライブ・公演'}情報を今すぐ検索してください。`
     : '上記の条件で提案してください。';
 
@@ -157,11 +210,14 @@ module.exports = async function handler(req, res) {
       messageParams.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
     }
 
-    const response = await client.messages.create(messageParams);
+    const response = useWebSearch
+      ? await callWithFallback(apiKey, messageParams)
+      : await new Anthropic({ apiKey, timeout: NORMAL_TIMEOUT_MS }).messages.create(messageParams);
 
     const usedWebSearch = response.content.some(
       b => b.type === 'tool_use' && b.name === 'web_search'
     );
+    const fellBack = !!response._fellBack;
 
     const textContent = response.content
       .filter(b => b.type === 'text')
@@ -178,25 +234,29 @@ module.exports = async function handler(req, res) {
     }
 
     if (!jsonStr) {
-      return res.status(500).json({ error: 'AIからの応答を解析できませんでした。もう一度お試しください。' });
+      return errorResponse(res, 'AIからの応答を解析できませんでした。もう一度お試しください。', mode);
     }
 
     let data;
     try {
       data = JSON.parse(jsonStr);
     } catch {
-      return res.status(500).json({ error: 'AIの応答形式が正しくありませんでした。もう一度お試しください。' });
+      return errorResponse(res, 'AIの応答形式が正しくありませんでした。もう一度お試しください。', mode);
     }
 
-    return res.status(200).json({ ...data, meta: { used_web_search: usedWebSearch, mode } });
+    return res.status(200).json({
+      ...data,
+      meta: { used_web_search: usedWebSearch && !fellBack, fell_back: fellBack, mode },
+    });
 
   } catch (error) {
     console.error('Anthropic API error:', error);
-    const status = error.status || error.statusCode;
-    if (status === 401) return res.status(500).json({ error: 'APIキーが無効です。Vercel環境変数の ANTHROPIC_API_KEY を確認してください。' });
-    if (status === 429) return res.status(429).json({ error: 'APIのレート制限に達しました。しばらく待ってから再試行してください。' });
-    if (status === 529 || status === 503) return res.status(503).json({ error: 'AIサービスが混雑しています。少し待ってから再試行してください。' });
-    if (status === 400) return res.status(500).json({ error: `リクエストエラー: ${error.message}` });
-    return res.status(500).json({ error: `エラーが発生しました: ${error.message || 'Unknown error'}` });
+    const status  = error.status || error.statusCode;
+    const message =
+      status === 401 ? 'APIキーが無効です。環境変数 ANTHROPIC_API_KEY を確認してください。' :
+      status === 429 ? 'APIのレート制限に達しました。少し待ってから再試行してください。' :
+      (status === 529 || status === 503) ? 'AIサービスが混雑しています。少し待ってから再試行してください。' :
+      `エラーが発生しました: ${error.message || 'Unknown error'}`;
+    return errorResponse(res, message, mode);
   }
 };
