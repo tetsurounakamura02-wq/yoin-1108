@@ -245,6 +245,7 @@
     .cat-sauna      { background: rgba(6, 182, 212, 0.15);  color: #22d3ee; }
     .cat-event      { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
     .cat-travel     { background: rgba(34, 197, 94, 0.15);  color: #4ade80; }
+    .cat-sports     { background: rgba(234, 179, 8, 0.15);  color: #eab308; }
     .cat-default    { background: rgba(100, 100, 150, 0.15); color: #9090c0; }
 
     .prestige { font-size: 0.95rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; }
@@ -402,6 +403,7 @@
         <span class="chip" data-value="サウナ">サウナ</span>
         <span class="chip" data-value="イベント">イベント</span>
         <span class="chip" data-value="旅行先">旅行先</span>
+        <span class="chip" data-value="スポーツ">スポーツ</span>
       </div>
     </div>
 
@@ -507,6 +509,7 @@
       if (cat.includes('サウナ'))     return 'cat-sauna';
       if (cat.includes('イベント'))   return 'cat-event';
       if (cat.includes('旅行'))       return 'cat-travel';
+      if (cat.includes('スポーツ'))   return 'cat-sports';
       return 'cat-default';
     }
 
