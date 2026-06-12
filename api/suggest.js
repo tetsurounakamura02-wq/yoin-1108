@@ -1,8 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 
-const WEB_SEARCH_MODES      = new Set(['live', 'sports']);
-const WEB_SEARCH_TIMEOUT_MS = 15_000;
-const NORMAL_TIMEOUT_MS     = 22_000;
+const WEB_SEARCH_MODES = new Set(['live', 'sports']);
+const API_TIMEOUT_MS   = 25_000;
 
 function getTodayJST() {
   const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -17,6 +16,26 @@ function formatBudget(budget) {
   return { '〜3000': '〜¥3,000', '3000-8000': '¥3,000〜¥8,000',
            '8000-20000': '¥8,000〜¥20,000', '20000+': '¥20,000以上' }[budget] || null;
 }
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function nonce()   { return Math.random().toString(36).slice(2, 8); }
+
+// 毎リクエストで視点を変えることで同じ候補の繰り返しを防ぐ
+const TONIGHT_ANGLES = [
+  { label: '穴場・隠れ家',   text: '有名すぎない地元民が通う隠れ家を優先。有名チェーン・観光地は避けること。' },
+  { label: '新店・話題店',   text: '最近オープンした店や今月話題の新規店を優先。老舗より新しい発見を。' },
+  { label: '老舗・職人技',   text: '長年愛されてきた老舗・名匠の店を優先。歴史と職人技を感じられる場所を。' },
+  { label: '地元の常連',     text: '観光客より地元の常連が多い、地域に根差した店を優先。地元誌に載るような場所を。' },
+  { label: '個性派・非日常', text: '他にはない独自コンセプトの店を優先。初めてなのに「ここしかない」と感じる場所を。' },
+];
+
+const TRAVEL_ANGLES = [
+  '定番観光地より一歩深い、地元のリアルな体験を重視してください。',
+  '自然・アウトドア・非日常体験を軸に選んでください。',
+  '食文化・地酒・郷土料理など「食」の体験を重視してください。',
+  '伝統工芸・アート・歴史的文化財に触れる体験を重視してください。',
+  '温泉・湯治・リトリートなど心身を整える体験を重視してください。',
+];
 
 const URL_RULE = `【URLルール（必須）】
 - Web検索で実際に見つけたURLのみ使う
@@ -58,26 +77,29 @@ function buildSystemPrompt(mode, { tags, area, freeText, exclude, count, budget,
   const freeClause = freeText   ? `\n追加条件: ${freeText}` : '';
 
   if (mode === 'tonight') {
+    const angle      = pick(TONIGHT_ANGLES);
     const genreHints = detectGenresFromTags(tags);
-    const genreLine  = genreHints.length
-      ? `\n候補ジャンル（参考）: ${genreHints.join('、')}` : '';
-    return `あなたはYOINのAIアシスタントです。
+    const genreLine  = genreHints.length ? `\n候補ジャンル（参考）: ${genreHints.join('、')}` : '';
+    const seed       = nonce();
+    return `あなたはYOINのAIアシスタントです。（探索ID: ${seed}）
 エリア: ${area} / 今日: ${today} / 提案数: ${count}件${budClause}${freeClause}
 気分・タグ: ${tagLine}${genreLine}${excClause}
+今回の視点: 【${angle.label}】${angle.text}
 
-今夜行けるスポットを${count}件提案してください。以下のルールを厳守すること:
+今夜行けるスポットを${count}件提案してください。以下を厳守すること:
 【多様性ルール（必須）】
 - 同じジャンルを2件以上出さない
 - 同じ価格帯を2件以上続けない
-- 提案は必ず3つの方向性に分けること:
+- 提案を必ず3方向に分けること:
     ① 雰囲気・空間重視（落ち着ける・静かな・こじんまり）
     ② 名店感・こだわり重視（人気店・老舗・クオリティ）
     ③ コスパ・気軽さ重視（安く行ける・ふらっと入れる）
-- グループ名はこの方向性ラベルをそのまま使うこと
-${URL_RULE}
+- 「今回の視点」を全スポットに反映すること
+- グループ名は上記①②③のラベルをそのまま使うこと
+URLはすべて null にすること（推測URL禁止）
 
 JSONのみ返してください（説明文・マークダウン不要）:
-{"title":"${area}・今夜の過ごし方","subtitle":"今の気分に合う場所","groups":[{"label":"グループ名","spots":[${SPOT_SCHEMA}]}]}`;
+{"title":"${area}・今夜の過ごし方","subtitle":"${angle.label}で探す","groups":[{"label":"グループ名","spots":[${SPOT_SCHEMA}]}]}`;
   }
 
   if (mode === 'live') {
@@ -96,8 +118,8 @@ JSONのみ返してください（説明文・マークダウン不要）:
   }
 
   if (mode === 'sports') {
-    const period  = dayRange === 'week' ? `${today}から7日間` : `今夜(${today})`;
-    const dateTag = dayRange === 'week' ? '\n・tagsに開催日（例:"6/15(日)"）を必ず含めること' : '';
+    const period       = dayRange === 'week' ? `${today}から7日間` : `今夜(${today})`;
+    const dateTag      = dayRange === 'week' ? '\n・tagsに開催日（例:"6/15(日)"）を必ず含めること' : '';
     const sportPriority = tags.length ? `「${tagLine}」を優先。` : '';
     return `あなたはYOINのAIアシスタントです。
 エリア: ${area}周辺（関東全域対応） / 期間: ${period} / 提案数: ${count}件${budClause}${freeClause}
@@ -113,37 +135,21 @@ JSONのみ返してください（説明文・マークダウン不要）:
   }
 
   if (mode === 'travel') {
-    return `あなたはYOINのAIアシスタントです。
+    const angle = pick(TRAVEL_ANGLES);
+    const seed  = nonce();
+    return `あなたはYOINのAIアシスタントです。（探索ID: ${seed}）
 エリア: ${area} / 提案数: ${count}件${budClause}${freeClause}
 テーマ・タグ: ${tagLine}${excClause}
+今回の視点: ${angle}
 
 ${area}エリアの旅行体験・スポットを${count}件提案してください。同ジャンル2件以上NG。
-${URL_RULE}
+URLはすべて null にすること（推測URL禁止）
 
 JSONのみ返してください（説明文・マークダウン不要）:
 {"title":"${area}への旅","subtitle":"旅のテーマ","experiences":[${EXP_SCHEMA}]}`;
   }
 
   return null;
-}
-
-// Web 検索あり→タイムアウト時にWeb検索なしでフォールバック
-async function callWithFallback(apiKey, messageParams) {
-  const clientFast = new Anthropic({ apiKey, timeout: WEB_SEARCH_TIMEOUT_MS });
-  try {
-    return await clientFast.messages.create(messageParams);
-  } catch (err) {
-    const isTimeout = err.code === 'ERR_REQUEST_TIMEOUT' || err.name === 'APITimeoutError'
-      || (err.message && err.message.includes('timeout'));
-    if (!isTimeout) throw err;
-    // タイムアウト → Web検索なしで再試行
-    const fallbackParams = { ...messageParams };
-    delete fallbackParams.tools;
-    const clientSlow = new Anthropic({ apiKey, timeout: NORMAL_TIMEOUT_MS });
-    const result = await clientSlow.messages.create(fallbackParams);
-    result._fellBack = true;
-    return result;
-  }
 }
 
 function errorResponse(res, message, mode) {
@@ -200,24 +206,22 @@ module.exports = async function handler(req, res) {
 
   try {
     const messageParams = {
-      model: 'claude-sonnet-4-6',
+      model:      'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      system:     systemPrompt,
+      messages:   [{ role: 'user', content: userMessage }],
     };
 
     if (useWebSearch) {
       messageParams.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
     }
 
-    const response = useWebSearch
-      ? await callWithFallback(apiKey, messageParams)
-      : await new Anthropic({ apiKey, timeout: NORMAL_TIMEOUT_MS }).messages.create(messageParams);
+    const client   = new Anthropic({ apiKey, timeout: API_TIMEOUT_MS });
+    const response = await client.messages.create(messageParams);
 
     const usedWebSearch = response.content.some(
       b => b.type === 'tool_use' && b.name === 'web_search'
     );
-    const fellBack = !!response._fellBack;
 
     const textContent = response.content
       .filter(b => b.type === 'text')
@@ -246,7 +250,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       ...data,
-      meta: { used_web_search: usedWebSearch && !fellBack, fell_back: fellBack, mode },
+      meta: { used_web_search: usedWebSearch, mode },
     });
 
   } catch (error) {
