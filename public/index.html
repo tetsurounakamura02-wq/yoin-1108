@@ -197,12 +197,16 @@
       40% { opacity: 1; }
     }
 
+    /* Results header: flex to hold badge + text */
     .results-header {
       font-size: 0.72rem;
       color: var(--muted);
       letter-spacing: 0.12em;
       margin: 32px 0 16px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .card {
@@ -245,11 +249,28 @@
 
     .prestige { font-size: 0.95rem; color: var(--gold); margin-bottom: 8px; letter-spacing: 2px; }
 
-    .atmosphere { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+    /* IMPROVED: atmosphere — italic + left accent border */
+    .atmosphere {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.6;
+      font-style: italic;
+      padding-left: 10px;
+      border-left: 2px solid var(--border);
+    }
 
-    .card-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 
-    .price-tag { font-size: 0.85rem; color: var(--price); font-weight: 500; }
+    /* IMPROVED: price — green bordered badge */
+    .price-tag {
+      font-size: 0.82rem;
+      color: var(--price);
+      font-weight: 500;
+      padding: 3px 8px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 6px;
+    }
 
     .emotion-tag {
       font-size: 0.8rem;
@@ -269,6 +290,72 @@
       padding-top: 10px;
       border-top: 1px solid var(--border);
     }
+
+    /* Feedback row */
+    .feedback-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .fb-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    .fb-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      transition: all 0.15s;
+      color: var(--muted);
+    }
+
+    .fb-btn:hover { border-color: var(--accent-dim); background: rgba(155, 89, 245, 0.08); }
+    .fb-btn.active { border-color: var(--accent); background: rgba(155, 89, 245, 0.15); }
+
+    /* Web search used badge */
+    .web-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      border-radius: 999px;
+      color: #4ade80;
+      letter-spacing: 0.05em;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--card);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      color: var(--text);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     .hidden { display: none !important; }
   </style>
@@ -339,8 +426,14 @@
 
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script>
-    // Single-select chip groups
+    // ── State ──────────────────────────────────────────────
+    let currentEmotion = '';
+    const FB_KEY = 'yoin_feedback';
+
+    // ── Chip setup ─────────────────────────────────────────
     function setupChips(containerId) {
       const container = document.getElementById(containerId);
       container.addEventListener('click', e => {
@@ -361,6 +454,51 @@
       document.querySelectorAll('#emotion-chips .chip').forEach(c => c.classList.remove('active'));
     });
 
+    // ── Feedback (localStorage) ────────────────────────────
+    function loadFeedback() {
+      try { return JSON.parse(localStorage.getItem(FB_KEY) || '[]'); }
+      catch { return []; }
+    }
+
+    function saveFeedback(name, emotion, value) {
+      const list = loadFeedback().filter(f => !(f.name === name && f.emotion === emotion));
+      if (value) list.push({ name, emotion, feedback: value, ts: Date.now() });
+      localStorage.setItem(FB_KEY, JSON.stringify(list));
+    }
+
+    function getFeedback(name, emotion) {
+      return loadFeedback().find(f => f.name === name && f.emotion === emotion)?.feedback || null;
+    }
+
+    // Event delegation — handles dynamically rendered cards
+    document.getElementById('results').addEventListener('click', e => {
+      const btn = e.target.closest('.fb-btn');
+      if (!btn) return;
+      const card = btn.closest('.card');
+      const name = card.dataset.name;
+      const value = btn.dataset.value;
+      const current = getFeedback(name, currentEmotion);
+      const newValue = current === value ? null : value; // toggle off if same
+
+      saveFeedback(name, currentEmotion, newValue);
+      card.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('active'));
+      if (newValue) {
+        btn.classList.add('active');
+        showToast('フィードバックありがとう！');
+      }
+    });
+
+    // ── Toast ──────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // ── Render helpers ─────────────────────────────────────
     function getCategoryClass(cat) {
       if (!cat) return 'cat-default';
       if (cat.includes('レストラン')) return 'cat-restaurant';
@@ -387,19 +525,25 @@
 
     function renderCard(s) {
       const catClass = getCategoryClass(s.category);
+      const fb = getFeedback(s.name, currentEmotion);
       return `
-        <div class="card">
+        <div class="card" data-name="${esc(s.name)}">
           <div class="card-top">
             <div class="card-name">${esc(s.name)}</div>
             <span class="card-category ${catClass}">${esc(s.category)}</span>
           </div>
           <div class="prestige">${renderPrestige(s.prestige)}</div>
-          <div class="atmosphere">${esc(s.atmosphere)}</div>
+          ${s.atmosphere ? `<div class="atmosphere">${esc(s.atmosphere)}</div>` : ''}
           <div class="card-meta">
             ${s.price_range ? `<span class="price-tag">${esc(s.price_range)}</span>` : ''}
-            ${s.emotion_match ? `<span class="emotion-tag">${esc(s.emotion_match)}</span>` : ''}
+            ${s.emotion_match ? `<span class="emotion-tag">♡ ${esc(s.emotion_match)}</span>` : ''}
           </div>
           ${s.description ? `<div class="description">${esc(s.description)}</div>` : ''}
+          <div class="feedback-row">
+            <span class="fb-label">この提案は役に立った？</span>
+            <button class="fb-btn${fb === 'good' ? ' active' : ''}" data-value="good" title="役に立った">👍</button>
+            <button class="fb-btn${fb === 'bad' ? ' active' : ''}" data-value="bad" title="役に立たなかった">👎</button>
+          </div>
         </div>`;
     }
 
@@ -409,6 +553,7 @@
       el.classList.remove('hidden');
     }
 
+    // ── Main search ────────────────────────────────────────
     async function suggest() {
       const activeChip = document.querySelector('#emotion-chips .chip.active');
       const inputVal = document.getElementById('emotion-input').value.trim();
@@ -422,6 +567,8 @@
       const activeCat = document.querySelector('#category-chips .chip.active');
       const category = activeCat ? activeCat.dataset.value : '';
       const useWebSearch = document.getElementById('web-search').checked;
+
+      currentEmotion = emotion;
 
       document.getElementById('error-box').classList.add('hidden');
       document.getElementById('results').innerHTML = '';
@@ -453,8 +600,12 @@
           return;
         }
 
+        const webBadge = data.meta?.used_web_search
+          ? '<span class="web-badge">🔍 Web検索使用</span>'
+          : '';
+
         document.getElementById('results').innerHTML =
-          `<div class="results-header">— ${data.suggestions.length}件の提案 —</div>` +
+          `<div class="results-header">${webBadge}— ${data.suggestions.length}件の提案 —</div>` +
           data.suggestions.map(renderCard).join('');
 
       } catch (err) {

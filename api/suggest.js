@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: 25_000 });
 
   const systemPrompt = `あなたは「YOIN（余韻）」というアプリのAIアシスタントです。
 ユーザーの感情・気分に合わせて、最適なスポットを5件提案してください。
@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
 - 名店度（prestige）：1〜5の整数（5が最高）
 - 感情との相性（emotion_match）：なぜこの感情・気分に合うかを一言で
 
-必ず以下のJSONのみを返してください（マークダウン・コードブロック不要）:
+【必須】Web検索結果を参照した場合も含め、レスポンスは以下のJSONのみを返してください。説明文・前置き・マークダウン・コードブロックは絶対不要です:
 {
   "suggestions": [
     {
@@ -71,6 +71,11 @@ module.exports = async function handler(req, res) {
     }
 
     const response = await client.messages.create(messageParams);
+
+    // web_search ツールが実際に発火したか記録
+    const usedWebSearch = response.content.some(
+      b => b.type === 'tool_use' && b.name === 'web_search'
+    );
 
     // Extract all text blocks (ignore tool_use blocks)
     const textContent = response.content
@@ -107,7 +112,10 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: '提案データが見つかりませんでした' });
     }
 
-    return res.status(200).json(data);
+    return res.status(200).json({
+      suggestions: data.suggestions,
+      meta: { used_web_search: usedWebSearch, model }
+    });
 
   } catch (error) {
     console.error('Anthropic API error:', error);
